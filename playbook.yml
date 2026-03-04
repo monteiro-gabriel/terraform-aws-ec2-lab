@@ -1,0 +1,39 @@
+- name: Deploy do site sem recriar EC2
+  hosts: terraform_ansible   
+  become: true
+
+  tasks:
+
+    - name: Criar diretório da aplicação
+      file:
+        path: /opt/site
+        state: directory
+        mode: "0755"
+
+    - name: Instalar Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Instalar rsync
+      apt:
+        name: rsync
+        state: present
+      # ADICIONADO: o módulo ansible.posix.synchronize usa rsync por baixo
+
+    - name: Iniciar Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Copiar o APP para a EC2
+      ansible.posix.synchronize:
+        src: /home/gabriel/projetos/Curso_Terraform/app/   # ALTERADO: barra "/" no final para copiar o conteúdo da pasta
+        dest: /opt/site/
+        recursive: yes
+        delete: no
+
+    - name: Criar os containeres
+      

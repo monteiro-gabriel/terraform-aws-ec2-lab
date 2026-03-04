@@ -26,31 +26,16 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "app_server" {
-  ami           = "ami-09256c524fab91d36"
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
 
   key_name               = "gabriel.monteiro"
   subnet_id              = "subnet-0f0f914f1878ae8f6"
   vpc_security_group_ids = ["sg-07f9c6e061f09f02b"]
 
-  user_data = <<-EOF
-#!/bin/bash
-set -e
-
-${file("user_data.sh")}
-
-mkdir -p /opt/site
-
-cat <<'HTML' > /opt/site/index.html
-${file("index.html")}
-HTML
-
-docker rm -f site 2>/dev/null || true
-docker run -d --name site -p 80:80 \
-  -v /opt/site:/usr/share/nginx/html:ro nginx:latest
-EOF
-
+  iam_instance_profile = aws_iam_instance_profile.ec2_ecr_readonly_profile.name
   tags = {
     Name = "teste-tf-monteiro"
   }
+
 }
